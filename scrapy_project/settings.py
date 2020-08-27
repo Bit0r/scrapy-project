@@ -44,9 +44,16 @@ DEFAULT_REQUEST_HEADERS = {
 
 # Enable or disable spider middlewares
 # See https://docs.scrapy.org/en/latest/topics/spider-middleware.html
-#SPIDER_MIDDLEWARES = {
-#    'scrapy_project.middlewares.ScrapyProjectSpiderMiddleware': 543,
-#}
+# SPIDER_MIDDLEWARES = {
+# 'scrapy_magicfields.MagicFieldsMiddleware': 100,
+# 'scrapy_project.middlewares.ScrapyProjectSpiderMiddleware': 543,
+# }
+
+# MAGIC_FIELDS can modify or add Item yield by spider
+# See https://github.com/scrapy-plugins/scrapy-magicfields
+# MAGIC_FIELDS = {
+#     "sku": "$field:url,r'item_no=(\d+)'",
+# }
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
