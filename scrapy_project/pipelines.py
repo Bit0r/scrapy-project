@@ -7,13 +7,15 @@ import mysql.connector
 from itemadapter import ItemAdapter
 from scrapy.exceptions import DropItem
 
-import env
+from env import game, mysqlInfo
+
+root_password = mysqlInfo['password']
 
 
 class DoubanPipeline:
     def open_spider(self, spider):
-        self.cnx = mysql.connector.connect(user=env.mysql_user,
-                                           password=env.mysql_password,
+        self.cnx = mysql.connector.connect(user='root',
+                                           password=root_password,
                                            database='douban',
                                            autocommit=True)
         self.cursor = self.cnx.cursor(prepared=True)
@@ -30,6 +32,34 @@ class DoubanPipeline:
                 query, (adapter['serial_number'], adapter['movie_name'],
                         adapter['introduce'], adapter['rating'],
                         adapter['evaluate'], adapter['description']))
+        except mysql.connector.Error as err:
+            raise DropItem(str(err))
+
+        return item
+
+    def close_spider(self, spider):
+        self.cursor.close()
+        self.cnx.close()
+
+
+class GamePipeline:
+    def open_spider(self, spider):
+        self.cnx = mysql.connector.connect(user='root',
+                                           password=root_password,
+                                           database=game['mysql'],
+                                           autocommit=True)
+        self.cursor = self.cnx.cursor(prepared=True)
+
+    def process_item(self, item, spider):
+        adapter = ItemAdapter(item)
+        query = '''
+        REPLACE INTO downlink (id, download, bonus, activation)
+        VALUES (?, ?, ?, ?)
+        '''
+        try:
+            self.cursor.execute(query,
+                                (adapter['id'], adapter['download'],
+                                 adapter['bonus'], adapter['activation']))
         except mysql.connector.Error as err:
             raise DropItem(str(err))
 

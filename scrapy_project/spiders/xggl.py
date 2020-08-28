@@ -1,7 +1,7 @@
 import scrapy
 from scrapy.utils.response import open_in_browser
 
-import env
+from env import xggl
 
 
 class XgglSpider(scrapy.Spider):
@@ -10,10 +10,10 @@ class XgglSpider(scrapy.Spider):
 
     def start_requests(self):
         yield scrapy.FormRequest('http://xggl.hnie.edu.cn/website/login',
-                                 callback=self.parse_login,
+                                 self.parse_login,
                                  formdata={
-                                     'username': env.xggl_user,
-                                     'password': env.xggl_password_md5
+                                     'username': xggl['user'],
+                                     'password': xggl['password_md5']
                                  })
 
     def parse_login(self, response):
@@ -21,7 +21,7 @@ class XgglSpider(scrapy.Spider):
             f.write(response.body)
         yield scrapy.FormRequest(
             'http://xggl.hnie.edu.cn/content/student/temp/zzdk',
-            formdata=env.xggl_formdata)
+            formdata=xggl['formdata'])
 
     def parse(self, response):
         open_in_browser(response)
