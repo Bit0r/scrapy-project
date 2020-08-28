@@ -2,3 +2,4 @@
 env.py
 *.log
 *.txt
+test.py

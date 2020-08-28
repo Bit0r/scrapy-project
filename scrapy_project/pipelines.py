@@ -9,29 +9,26 @@ from scrapy.exceptions import DropItem
 
 from env import game, mysqlInfo
 
-root_password = mysqlInfo['password']
 
+class MysqlPipeline:
+    user = 'root'
+    password = mysqlInfo['password']
+    autocommit = True
 
-class DoubanPipeline:
     def open_spider(self, spider):
-        self.cnx = mysql.connector.connect(user='root',
-                                           password=root_password,
-                                           database='douban',
-                                           autocommit=True)
+        self.cnx = mysql.connector.connect(user=self.user,
+                                           password=self.password,
+                                           database=self.database,
+                                           autocommit=self.autocommit)
         self.cursor = self.cnx.cursor(prepared=True)
 
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
-        query = '''
-        REPLACE INTO top250 (serial_number, movie_name, introduce, rating, evaluate, description)
-        VALUES (?, ?, ?, ?, ?, ?)
-        '''
 
         try:
             self.cursor.execute(
-                query, (adapter['serial_number'], adapter['movie_name'],
-                        adapter['introduce'], adapter['rating'],
-                        adapter['evaluate'], adapter['description']))
+                self.query,
+                tuple(adapter[field_name] for field_name in self.field_names))
         except mysql.connector.Error as err:
             raise DropItem(str(err))
 
@@ -42,29 +39,26 @@ class DoubanPipeline:
         self.cnx.close()
 
 
-class GamePipeline:
-    def open_spider(self, spider):
-        self.cnx = mysql.connector.connect(user='root',
-                                           password=root_password,
-                                           database=game['mysql'],
-                                           autocommit=True)
-        self.cursor = self.cnx.cursor(prepared=True)
+class DoubanPipeline(MysqlPipeline):
+    database = 'douban'
+    query = '''
+    REPLACE INTO top250 (
+        serial_number,
+        movie_name, introduce,
+        rating,
+        evaluate,
+        description
+    )
+    VALUES (?, ?, ?, ?, ?, ?)
+    '''
+    field_names = ('serial_number', 'movie_name', 'introduce', 'rating',
+                   'evaluate', 'description')
 
-    def process_item(self, item, spider):
-        adapter = ItemAdapter(item)
-        query = '''
-        REPLACE INTO downlink (id, download, bonus, activation)
-        VALUES (?, ?, ?, ?)
-        '''
-        try:
-            self.cursor.execute(query,
-                                (adapter['id'], adapter['download'],
-                                 adapter['bonus'], adapter['activation']))
-        except mysql.connector.Error as err:
-            raise DropItem(str(err))
 
-        return item
-
-    def close_spider(self, spider):
-        self.cursor.close()
-        self.cnx.close()
+class GamePipeline(MysqlPipeline):
+    database = game['mysql']
+    query = '''
+    REPLACE INTO downlink (id, download, bonus, activation)
+    VALUES (?, ?, ?, ?)
+    '''
+    field_names = ('id', 'download', 'bonus', 'activation')
