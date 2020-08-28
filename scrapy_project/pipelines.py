@@ -2,22 +2,18 @@
 #
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: https://docs.scrapy.org/en/latest/topics/item-pipeline.html
-from os import getenv
-
 import mysql.connector
-from dotenv import load_dotenv
-from scrapy.exceptions import DropItem
-
 # useful for handling different item types with a single interface
 from itemadapter import ItemAdapter
+from scrapy.exceptions import DropItem
 
-load_dotenv()
+import env
 
 
 class DoubanPipeline:
     def open_spider(self, spider):
-        self.cnx = mysql.connector.connect(user=getenv('mysql_user'),
-                                           password=getenv('mysql_password'),
+        self.cnx = mysql.connector.connect(user=env.mysql_user,
+                                           password=env.mysql_password,
                                            database='douban',
                                            autocommit=True)
         self.cursor = self.cnx.cursor(prepared=True)
